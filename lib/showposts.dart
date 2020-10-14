@@ -6,11 +6,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'constants.dart';
 import 'apiCalls.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class ShowPosts extends StatefulWidget {
-  String nickName;
+  String keyForIDs;
+  bool showPostsfromNickName;
 
-  ShowPosts(this.nickName);
+  ShowPosts(this.keyForIDs, this.showPostsfromNickName);
 
   @override
   _ShowPostsState createState() => _ShowPostsState();
@@ -24,7 +26,7 @@ class _ShowPostsState extends State<ShowPosts> {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.data == null) {
             return Container(
-                height: 200.0, child: Center(child: Text("No Image found")));
+                height: 200.0, child: Center(child: Icon(Icons.image_not_supported)));
           } else {
             try {
               Uint8List bytes = base64.decode(snapshot.data);
@@ -35,7 +37,7 @@ class _ShowPostsState extends State<ShowPosts> {
               );
             } catch (exception) {
               return Container(
-                  height: 200.0, child: Center(child: Text("Invalid Image")));
+                  height: 200.0, child: Center(child: Icon(Icons.broken_image)));
             }
           }
         } else {
@@ -54,7 +56,7 @@ class _ShowPostsState extends State<ShowPosts> {
           if (snapshot.data != null) {
             String caption = snapshot.data['post']['text'].trim();
             String hashtags = snapshot.data['post']['hashtags'].join(" ");
-            String rating = snapshot.data['post']['ratings-average'].toString();
+            double rating = snapshot.data['post']['ratings-average'].toDouble();
             String ratingCount =
                 snapshot.data['post']['ratings-count'].toString();
 
@@ -63,7 +65,28 @@ class _ShowPostsState extends State<ShowPosts> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Average Rating: $rating, Rated by $ratingCount people"),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      RatingBar(
+                        ignoreGestures: true,
+                        initialRating: rating,
+                        minRating: 0.00,
+                        direction: Axis.horizontal,
+                        allowHalfRating: true,
+                        itemCount: 5,
+                        itemSize: 25,
+                        itemPadding: EdgeInsets.symmetric(horizontal: 1.0),
+                        itemBuilder: (context, _) => Icon(
+                          Icons.star,
+                          color: Colors.black,
+                        ),
+
+                      ),
+                      Text("Rated by $ratingCount people"),
+                    ],
+                  ),
+
                   Text(caption),
                   Text(hashtags)
                 ],
@@ -122,7 +145,9 @@ class _ShowPostsState extends State<ShowPosts> {
           backgroundColor: Colors.black,
         ),
         body: FutureBuilder(
-          future: ApiCalls.getPostIDS(widget.nickName),
+          future: widget.showPostsfromNickName
+              ? ApiCalls.getPostIDswithNickName(widget.keyForIDs)
+              : ApiCalls.getPostIDswithHashTag(widget.keyForIDs),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               print(snapshot.data);

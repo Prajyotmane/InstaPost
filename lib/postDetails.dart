@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io' as Io;
 import 'dart:typed_data';
+import 'package:assignment_two/RateThePost.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +20,7 @@ class DetailedPost extends StatefulWidget {
 class _DetailedPostState extends State<DetailedPost> {
   String comment;
   final _commentFormKey = GlobalKey<FormState>();
+  int currentRating = 0;
 
   Widget _loadImage(String id) {
     return FutureBuilder(
@@ -27,7 +29,7 @@ class _DetailedPostState extends State<DetailedPost> {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.data == null) {
             return Container(
-                height: 200.0, child: Center(child: Text("No Image found")));
+                height: 200.0, child: Center(child: Icon(Icons.image_not_supported)));
           } else {
             try {
               Uint8List bytes = base64.decode(snapshot.data);
@@ -38,7 +40,7 @@ class _DetailedPostState extends State<DetailedPost> {
               );
             } catch (exception) {
               return Container(
-                  height: 200.0, child: Center(child: Text("Invalid Image")));
+                  height: 200.0, child: Center(child: Icon(Icons.broken_image)));
             }
           }
         } else {
@@ -58,20 +60,26 @@ class _DetailedPostState extends State<DetailedPost> {
     return userCreds;
   }
 
-  Widget _loadComments(List<dynamic> comments) {
-    return ListView.builder(
-      itemCount: comments.length,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 1.0, horizontal: 1.0),
-          child: Card(
-            child: ListTile(
-              title: Text(comments[index].toString()),
-            ),
-          ),
-        );
-      },
-    );
+  Future<bool> _rateThePost() async {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return RateThePostDialog();
+        }).then((rating) {
+      currentRating = rating.round();
+      if (currentRating > 0) {
+        return _getUserCredentials().then((value) {
+          String email = value[0];
+          String password = value[1];
+          return ApiCalls.rateThePost(
+                  email, password, int.parse(widget.id), currentRating)
+              .then((value) => value);
+        });
+      } else {
+        return false;
+      }
+    });
   }
 
   @override
@@ -110,6 +118,23 @@ class _DetailedPostState extends State<DetailedPost> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                      RaisedButton(
+                        onPressed: () async {
+                          String message;
+                          _rateThePost().then((value) {
+                            if (currentRating > 0 && value) {
+                              message = "Your rating has been submitted.";
+                            } else if (currentRating > 0 && !value) {
+                              message = "Something went wrong. Try again!";
+                            } else {
+                              message = "Canceled";
+                            }
+                            final snackBar = SnackBar(content: Text(message));
+                            Scaffold.of(context).showSnackBar(snackBar);
+                          });
+                        },
+                        child: Text("Rate this post"),
                       ),
                       Form(
                         key: _commentFormKey,

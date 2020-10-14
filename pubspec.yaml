@@ -38,6 +38,8 @@ dev_dependencies:
     sdk: flutter
   image_picker: ^0.6.7
   transparent_image: 1.0.0
+  hashtagable: 1.0.3
+  flutter_rating_bar: 3.0.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

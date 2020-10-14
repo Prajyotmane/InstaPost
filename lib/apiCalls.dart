@@ -54,11 +54,25 @@ class ApiCalls {
     return result['nicknames'];
   }
 
-  static Future<List> getPostIDS(String _nickName) async {
+  static Future<List> getHashTags() async {
+    String url = "https://bismarck.sdsu.edu/api/instapost-query/hashtags";
+    var response = await http.get(url);
+    Map<String, dynamic> result = jsonDecode(response.body);
+    return result['hashtags'];
+  }
+  static Future<List> getPostIDswithNickName(String _nickName) async {
     String url =
         "https://bismarck.sdsu.edu/api/instapost-query/nickname-post-ids?nickname=$_nickName";
     var response = await http.get(url);
     Map<String, dynamic> result = jsonDecode(response.body);
+    return result['ids'];
+  }
+  static Future<List> getPostIDswithHashTag(String _hashTag) async {
+    String url =
+        "https://bismarck.sdsu.edu/api/instapost-query/hashtags-post-ids?hashtag=$_hashTag".replaceAll("#", "%23");
+    var response = await http.get(url);
+    Map<String, dynamic> result = jsonDecode(response.body);
+    print(url);
     return result['ids'];
   }
 
@@ -82,30 +96,31 @@ class ApiCalls {
     return result;
   }
 
-
-  static Future<bool> postComment(String email, String password, String id, String comment) async{
-      var response = await http.post(
-        'https://bismarck.sdsu.edu/api/instapost-upload/comment',
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, dynamic>{
-          "email": email,
-          "password": password,
-          "comment": comment,
-          "post-id": int.parse(id)
-        }),
-      );
-      Map<String, dynamic> result = jsonDecode(response.body);
-      if(result['result']=="success"){
-        return true;
-      }else{
-        return false;
-      }
+  static Future<bool> postComment(
+      String email, String password, String id, String comment) async {
+    var response = await http.post(
+      'https://bismarck.sdsu.edu/api/instapost-upload/comment',
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, dynamic>{
+        "email": email,
+        "password": password,
+        "comment": comment,
+        "post-id": int.parse(id)
+      }),
+    );
+    Map<String, dynamic> result = jsonDecode(response.body);
+    if (result['result'] == "success") {
+      return true;
+    } else {
+      return false;
+    }
   }
 
-  static Future<int> uploadPost(String email, String password, String post, List<String> hashtags) async {
-
+  static Future<int> uploadPost(
+      String email, String password, String post, List<String> hashtags) async {
+    print("In uploadPost $post");
     var response = await http.post(
       'https://bismarck.sdsu.edu/api/instapost-upload/post',
       headers: <String, String>{
@@ -119,9 +134,12 @@ class ApiCalls {
       }),
     );
     Map<String, dynamic> result = jsonDecode(response.body);
+    print(result['errors']);
     return result['id'];
   }
-  static Future<bool> uploadImage(String email, String password,int postId,String encodedImage) async{
+
+  static Future<bool> uploadImage(
+      String email, String password, int postId, String encodedImage) async {
     var response = await http.post(
       'https://bismarck.sdsu.edu/api/instapost-upload/image',
       headers: <String, String>{
@@ -136,9 +154,32 @@ class ApiCalls {
     );
     Map<String, dynamic> result = jsonDecode(response.body);
     print(result['result']);
-    if(result['result']=="success"){
+    if (result['result'] == "success") {
       return true;
-    }else{
+    } else {
+      return false;
+    }
+  }
+
+  static Future<bool> rateThePost(
+      String email, String password, int postId, int rating) async {
+    var response = await http.post(
+      'https://bismarck.sdsu.edu/api/instapost-upload/rating',
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, dynamic>{
+        "email": email,
+        "password": password,
+        "rating": rating,
+        "post-id": postId
+      }),
+    );
+    Map<String, dynamic> result = jsonDecode(response.body);
+    print(result['result']);
+    if (result['result'] == "success") {
+      return true;
+    } else {
       return false;
     }
   }
