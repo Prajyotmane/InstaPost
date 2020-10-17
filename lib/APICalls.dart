@@ -1,50 +1,49 @@
 import 'dart:io';
-import 'package:assignment_two/SharedPreferencesManager.dart';
+import 'package:assignment_two/CacheFileManager.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 
 class ApiCalls {
-  static Future<Directory> get _getcachedir async =>
-      _cachedir ??= await getTemporaryDirectory();
-  static Directory _cachedir;
-
-  static Future<Directory> init() async {
-    _cachedir = await _getcachedir;
-    return _cachedir;
-  }
-
   static Future<String> signUp(
       _firstName, _lastName, _nickName, _email, _password) async {
-    String url =
-        "https://bismarck.sdsu.edu/api/instapost-upload/newuser?firstname=" +
-            _firstName +
-            "&lastname=" +
-            _lastName +
-            "&nickname=" +
-            _nickName +
-            "&email=" +
-            _email +
-            "&password=" +
-            _password;
-    var response = await http.get(url);
-    Map<String, dynamic> result = jsonDecode(response.body);
-    if (result['result'] == "success") {
-      return "";
-    } else {
-      return result['errors'];
+    try {
+      String url =
+          "https://bismarck.sdsu.edu/api/instapost-upload/newuser?firstname=" +
+              _firstName +
+              "&lastname=" +
+              _lastName +
+              "&nickname=" +
+              _nickName +
+              "&email=" +
+              _email +
+              "&password=" +
+              _password;
+      var response = await http.get(url);
+      Map<String, dynamic> result = jsonDecode(response.body);
+      if (result['result'] == "success") {
+        return "";
+      } else {
+        return result['errors'];
+      }
+    } on Exception catch (e) {
+      return "No internet connection";
     }
   }
 
   static Future<bool> logIn(_email, _password) async {
-    String url =
-        "https://bismarck.sdsu.edu/api/instapost-query/authenticate?email=" +
-            _email +
-            "&password=" +
-            _password;
-    var response = await http.get(url);
-    Map<String, dynamic> result = jsonDecode(response.body);
-    return result['result'];
+    try {
+      String url =
+          "https://bismarck.sdsu.edu/api/instapost-query/authenticate?email=" +
+              _email +
+              "&password=" +
+              _password;
+      var response = await http.get(url);
+      Map<String, dynamic> result = jsonDecode(response.body);
+      return result['result'];
+    } on Exception catch (e) {
+      return false;
+    }
   }
 
   static Future<List> getNickNames() async {
@@ -82,14 +81,9 @@ class ApiCalls {
       return result['hashtags'];
     } on SocketException catch (_) {
       print('Device is offline');
-      if (await File(_cachedir.path + "/" + fileName).exists()) {
-        print("Loading from cache");
-        Map<String, dynamic> result =
-            await CacheFileManager.readDataFromCache(fileName);
-        return result['hashtags'];
-      } else {
-        return [];
-      }
+      Map<String, dynamic> result =
+          await CacheFileManager.readDataFromCache(fileName);
+      return result['hashtags'];
     } catch (e) {
       print("Exception " + e);
       return [];
@@ -108,14 +102,9 @@ class ApiCalls {
       return result['ids'];
     } on SocketException catch (e) {
       print('Device is offline');
-      if (await File(_cachedir.path + "/" + fileName).exists()) {
-        print("Loading post IDs from cache");
-        Map<String, dynamic> result =
-            await CacheFileManager.readDataFromCache(fileName);
-        return result['ids'];
-      } else {
-        return [];
-      }
+      Map<String, dynamic> result =
+          await CacheFileManager.readDataFromCache(fileName);
+      return result['ids'];
     }
   }
 
@@ -132,14 +121,9 @@ class ApiCalls {
       return result['ids'];
     } on SocketException catch (e) {
       print('Device is offline');
-      if (await File(_cachedir.path + "/" + fileName).exists()) {
-        print("Loading post IDs from cache");
-        Map<String, dynamic> result =
-            await CacheFileManager.readDataFromCache(fileName);
-        return result['ids'];
-      } else {
-        return [];
-      }
+      Map<String, dynamic> result =
+          await CacheFileManager.readDataFromCache(fileName);
+      return result['ids'];
     }
   }
 
@@ -159,17 +143,12 @@ class ApiCalls {
       }
     } on Exception catch (e) {
       print('Device is offline');
-      if (await File(_cachedir.path + "/" + fileName).exists()) {
-        print("Loading post IDs from cache");
-        Map<String, dynamic> result =
-            await CacheFileManager.readDataFromCache(fileName);
-        if (result['result'] == "fail") {
-          return null;
-        } else {
-          return result['image'];
-        }
-      } else {
+      Map<String, dynamic> result =
+          await CacheFileManager.readDataFromCache(fileName);
+      if (result.isEmpty || result['result'] == "fail") {
         return null;
+      } else {
+        return result['image'];
       }
     }
   }
@@ -182,11 +161,11 @@ class ApiCalls {
       var response = await http.get(url);
       Map<String, dynamic> result = jsonDecode(response.body);
       bool fileWriteResponse =
-      await CacheFileManager.saveDataToCache(fileName, response.body);
+          await CacheFileManager.saveDataToCache(fileName, response.body);
       return result;
     } on Exception catch (e) {
       Map<String, dynamic> result =
-      await CacheFileManager.readDataFromCache(fileName);
+          await CacheFileManager.readDataFromCache(fileName);
       return result;
     }
   }

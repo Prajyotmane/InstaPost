@@ -1,9 +1,10 @@
 import 'dart:io';
-import 'package:assignment_two/instapostfeed.dart';
+import 'package:assignment_two/InstaPostFeed.dart';
 import 'package:assignment_two/main.dart';
 import 'package:flutter/material.dart';
+import 'LoadingScreen.dart';
 import 'constants.dart';
-import 'apiCalls.dart';
+import 'APICalls.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
@@ -14,6 +15,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   String _email = "", _password = "";
   final _formKey = GlobalKey<FormState>();
+  final GlobalKey<State> _keyLoader = new GlobalKey<State>();
 
   bool validateEmail(String value) {
     Pattern pattern =
@@ -88,12 +90,14 @@ class _LoginPageState extends State<LoginPage> {
                                   onPressed: () {
                                     print("Button pressed");
                                     if (_formKey.currentState.validate()) {
+                                      Dialogs.showLoadingDialog(context, _keyLoader);
                                       _formKey.currentState.save();
                                       ApiCalls.logIn(_email, _password)
                                           .then((value) {
                                         if (value) {
                                           _saveUserDetails(_email, _password)
                                               .then((value) {
+                                            Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
                                             final snackBar = SnackBar(
                                                 content:
                                                     Text("Login successful"));
@@ -107,6 +111,7 @@ class _LoginPageState extends State<LoginPage> {
                                             );
                                           });
                                         } else {
+                                          Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
                                           final snackBar = SnackBar(
                                               content: Text("Login Failed"));
                                           Scaffold.of(context)

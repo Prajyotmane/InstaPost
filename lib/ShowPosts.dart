@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io' as Io;
 import 'dart:typed_data';
-import 'package:assignment_two/postDetails.dart';
+import 'package:assignment_two/PostDetails.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'constants.dart';
-import 'apiCalls.dart';
+import 'APICalls.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class ShowPosts extends StatefulWidget {
@@ -79,25 +79,39 @@ class _ShowPostsState extends State<ShowPosts> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      RatingBar(
-                        ignoreGestures: true,
-                        initialRating: rating,
-                        minRating: 0.00,
-                        direction: Axis.horizontal,
-                        allowHalfRating: true,
-                        itemCount: 5,
-                        itemSize: 25,
-                        itemPadding: EdgeInsets.symmetric(horizontal: 1.0),
-                        itemBuilder: (context, _) => Icon(
-                          Icons.star,
-                          color: Colors.black,
+                      Padding(
+                        padding: const EdgeInsets.all(2.0),
+                        child: RatingBar(
+                          ignoreGestures: true,
+                          initialRating: rating,
+                          minRating: 0.00,
+                          direction: Axis.horizontal,
+                          allowHalfRating: true,
+                          itemCount: 5,
+                          itemSize: 25,
+                          itemPadding: EdgeInsets.symmetric(horizontal: 1.0),
+                          itemBuilder: (context, _) => Icon(
+                            Icons.star,
+                            color: Colors.black,
+                          ),
                         ),
                       ),
-                      Text("Rated by $ratingCount people"),
+                      Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: RichText(text: TextSpan(
+                          text: 'Rated by ',
+                          style: DefaultTextStyle.of(context).style,
+                          children: <TextSpan>[
+                            TextSpan(text: ratingCount, style: TextStyle(fontWeight: FontWeight.bold)),
+                            TextSpan(text: ' people'),
+                          ],)),
+                      ),
                     ],
                   ),
-                  Text(caption),
-                  Text(hashtags)
+                  Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: Text(caption,style: TextStyle(fontSize: 14.0),),
+                  ),
                 ],
               ),
             );
@@ -128,9 +142,10 @@ class _ShowPostsState extends State<ShowPosts> {
             },
             child: Padding(
               padding:
-                  const EdgeInsets.symmetric(vertical: 2.0, horizontal: 0.0),
+                  const EdgeInsets.symmetric(vertical: 0.0, horizontal: 0.0),
               child: Card(
-                margin: EdgeInsets.fromLTRB(0.0, 2.0, 0.0, 4.0),
+                elevation: 10.0,
+                margin: EdgeInsets.fromLTRB(6.0, 0.0, 6.0, 8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -160,11 +175,20 @@ class _ShowPostsState extends State<ShowPosts> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               print(snapshot.data);
-              if (snapshot.data.length > 0) {
+              if (snapshot.data!=null && snapshot.data.length > 0) {
                 return _loadPosts(snapshot.data);
               } else {
                 return Center(
-                  child: Text("There are No IDs"),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(4.0),
+                        child: Icon(Icons.image_search_rounded),
+                      ),
+                      Text("No posts found"),
+                    ],
+                  ),
                 );
               }
             } else {

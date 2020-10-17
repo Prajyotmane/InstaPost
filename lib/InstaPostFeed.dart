@@ -1,11 +1,11 @@
 import 'dart:io';
-import 'package:assignment_two/postsByNickName.dart';
-import 'package:assignment_two/postsByhashTag.dart';
-import 'package:assignment_two/showposts.dart';
+import 'package:assignment_two/PostsByNickName.dart';
+import 'package:assignment_two/PostsByhashTag.dart';
+import 'package:assignment_two/ShowPosts.dart';
 import 'package:flutter/material.dart';
 import 'constants.dart';
-import 'apiCalls.dart';
-import 'makepost.dart';
+import 'APICalls.dart';
+import 'MakePost.dart';
 
 class InstaPostFeed extends StatefulWidget {
   @override

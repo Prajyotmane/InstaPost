@@ -10,7 +10,6 @@ class DBProvider {
 
   Future<Database> get database async {
     if (_database != null) return _database;
-
     // if _database is null we instantiate it
     _database = await initDB();
     return _database;
@@ -38,9 +37,11 @@ class DBProvider {
   }
 
   getPendingPosts() async {
+    print("Getting pending posts");
     final db = await database;
     var res = await db.rawQuery("SELECT * FROM PendingPosts");
     List<Map<String, dynamic>> result = res;
+    print("Found :$result");
     return result;
   }
 

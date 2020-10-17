@@ -25,6 +25,7 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^0.12.2
+  screen_loader: ^2.0.1
   shared_preferences: ^0.5.10
   path_provider:
 
