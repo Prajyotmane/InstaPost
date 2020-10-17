@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'constants.dart';
 import 'apiCalls.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+
 
 class DetailedPost extends StatefulWidget {
   String id;
@@ -28,8 +30,11 @@ class _DetailedPostState extends State<DetailedPost> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.data == null) {
-            return Container(
-                height: 200.0, child: Center(child: Icon(Icons.image_not_supported)));
+            return Tooltip(
+              message: "This post does not have image",
+              child: Container(
+                  height: 200.0, child: Center(child: Icon(Icons.image_not_supported))),
+            );
           } else {
             try {
               Uint8List bytes = base64.decode(snapshot.data);
@@ -39,8 +44,11 @@ class _DetailedPostState extends State<DetailedPost> {
                 fit: BoxFit.fill,
               );
             } catch (exception) {
-              return Container(
-                  height: 200.0, child: Center(child: Icon(Icons.broken_image)));
+              return Tooltip(
+                message: "This image is broken",
+                child: Container(
+                    height: 200.0, child: Center(child: Icon(Icons.broken_image))),
+              );
             }
           }
         } else {
@@ -97,8 +105,8 @@ class _DetailedPostState extends State<DetailedPost> {
             if (snapshot.connectionState == ConnectionState.done) {
               String caption = snapshot.data['post']['text'].trim();
               String hashtags = snapshot.data['post']['hashtags'].join(" ");
-              String rating =
-                  snapshot.data['post']['ratings-average'].toString();
+              double rating =
+                  snapshot.data['post']['ratings-average'].toDouble();
               String ratingCount =
                   snapshot.data['post']['ratings-count'].toString();
               List<dynamic> comments = snapshot.data['post']['comments'];
@@ -108,8 +116,27 @@ class _DetailedPostState extends State<DetailedPost> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _loadImage(widget.id),
-                      Text(
-                          "Average Rating: $rating, \nRated by $ratingCount people"),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          RatingBar(
+                            ignoreGestures: true,
+                            initialRating: rating,
+                            minRating: 0.00,
+                            direction: Axis.horizontal,
+                            allowHalfRating: true,
+                            itemCount: 5,
+                            itemSize: 25,
+                            itemPadding: EdgeInsets.symmetric(horizontal: 1.0),
+                            itemBuilder: (context, _) => Icon(
+                              Icons.star,
+                              color: Colors.black,
+                            ),
+
+                          ),
+                          Text("Rated by $ratingCount people"),
+                        ],
+                      ),
                       Text(caption),
                       Text(hashtags),
                       Text(
@@ -126,7 +153,7 @@ class _DetailedPostState extends State<DetailedPost> {
                             if (currentRating > 0 && value) {
                               message = "Your rating has been submitted.";
                             } else if (currentRating > 0 && !value) {
-                              message = "Something went wrong. Try again!";
+                              message = "Something went wrong. Check your internet connection";
                             } else {
                               message = "Canceled";
                             }
@@ -180,7 +207,7 @@ class _DetailedPostState extends State<DetailedPost> {
                                             } else {
                                               final snackBar = SnackBar(
                                                   content: Text(
-                                                      "Could not post comment"));
+                                                      "Could not post comment. Check your internet connection."));
                                               Scaffold.of(context)
                                                   .showSnackBar(snackBar);
                                             }

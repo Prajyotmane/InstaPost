@@ -33,7 +33,7 @@ class _NickNameListState extends State<NickNameList> {
                       },
                       title: Text(snapshot.data[index]),
                       leading: CircleAvatar(
-                        backgroundImage: AssetImage('assets/profile_pic_dummy.jpg'),
+                        backgroundImage: AssetImage('assets/image_placeholder.png'),
                       ),
                     ),
                   ),

@@ -40,6 +40,8 @@ dev_dependencies:
   transparent_image: 1.0.0
   hashtagable: 1.0.3
   flutter_rating_bar: 3.0.1
+  sqflite: any
+  path_provider: any
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

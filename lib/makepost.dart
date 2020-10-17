@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:assignment_two/apiCalls.dart';
+import 'package:assignment_two/dbHandler.dart';
+import 'package:assignment_two/deviceStatus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:transparent_image/transparent_image.dart';
 import 'package:hashtagable/hashtagable.dart';
 
 class MakeAPost extends StatefulWidget {
@@ -15,9 +16,8 @@ class MakeAPost extends StatefulWidget {
 
 class _MakeAPostState extends State<MakeAPost> {
   File _image;
-  final _postFormKey = GlobalKey<FormState>();
   String _postText, _textErrorText, _hashTagErrorText;
-  bool _textError = false, _hashTagError = false;
+  bool _textError = false, _hashTagError = false, isConnected = true;
   List<String> _hashTags;
   Widget show = Container();
   final hashTagController = TextEditingController(),
@@ -52,7 +52,7 @@ class _MakeAPostState extends State<MakeAPost> {
     print(_postText);
     print(_hashTags);
 
-    if (_postText.length==0) {
+    if (_postText.length == 0) {
       setState(() {
         _textError = true;
         _textErrorText = "Post must contain text";
@@ -62,7 +62,7 @@ class _MakeAPostState extends State<MakeAPost> {
         _textError = true;
         _textErrorText = "Post must not contain more than 140 characters";
       });
-    }else{
+    } else {
       setState(() {
         _textError = false;
       });
@@ -73,7 +73,7 @@ class _MakeAPostState extends State<MakeAPost> {
         _hashTagError = true;
         _hashTagErrorText = "Post must have some hashtags";
       });
-    }else{
+    } else {
       setState(() {
         _hashTagError = false;
       });
@@ -82,30 +82,42 @@ class _MakeAPostState extends State<MakeAPost> {
   }
 
   Future<bool> _uploadPost(String email, String password) async {
-    return ApiCalls.uploadPost(email, password, _postText, _hashTags)
-        .then((id) {
-      if (id == -1) {
-        print("Error occurred while uploading the post");
-        return false;
-      } else {
-        print("Post ID is " + id.toString());
-        if (_image != null) {
-          return _image.readAsBytes().then((value) {
-            String encodedImage = base64Encode(value);
-            return ApiCalls.uploadImage(email, password, id, encodedImage)
-                .then((response) {
-              if (response == true) {
-                return true;
-              } else {
-                return false;
-              }
-            });
-          });
-        } else {
+    isConnected = await DeviceStatus.dstate.isDeviceOnline();
+    if(isConnected) {
+        return ApiCalls.uploadPost(email, password, _postText, _hashTags)
+            .then((id) {
+          if (id == -1) {
+            print("Error occurred while uploading the post");
+            return false;
+          } else {
+            print("Post ID is " + id.toString());
+            if (_image != null) {
+              return _image.readAsBytes().then((value) {
+                String encodedImage = base64Encode(value);
+                return ApiCalls.uploadImage(email, password, id, encodedImage)
+                    .then((response) {
+                  if (response == true) {
+                    return true;
+                  } else {
+                    return false;
+                  }
+                });
+              });
+            } else {
+              return true;
+            }
+          }
+        });
+    } else {
+      return _image.readAsBytes().then((value) {
+        String encodedImage = base64Encode(value);
+        return DBProvider.db
+            .newPost(encodedImage, _postText, _hashTags.join(" "))
+            .then((value) {
           return true;
-        }
-      }
-    });
+        });
+      });
+    }
   }
 
   @override
@@ -129,11 +141,10 @@ class _MakeAPostState extends State<MakeAPost> {
       Column(
         children: [
           TextField(
-            controller: postController,
+              controller: postController,
               decoration: InputDecoration(
                   labelText: "Type your post..",
-                  errorText: _textError ? _textErrorText : null)
-          ),
+                  errorText: _textError ? _textErrorText : null)),
           HashTagTextField(
             decoration: InputDecoration(
                 labelText: "Give some hashtags..",
@@ -152,9 +163,13 @@ class _MakeAPostState extends State<MakeAPost> {
                   String email = value[0];
                   String password = value[1];
                   _uploadPost(email, password).then((value) {
-                    if (value == true) {
+                    if (value == true && isConnected == true) {
                       final snackBar =
                           SnackBar(content: Text("Post uploaded successfully"));
+                      Scaffold.of(context).showSnackBar(snackBar);
+                    } else if (value == true && isConnected == false) {
+                      final snackBar =
+                          SnackBar(content: Text("You are offline. Post will be updated when device comes online"));
                       Scaffold.of(context).showSnackBar(snackBar);
                     } else {
                       final snackBar =

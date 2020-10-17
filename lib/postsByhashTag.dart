@@ -33,7 +33,7 @@ class _HashTagListState extends State<HashTagList> {
                       },
                       title: Text(snapshot.data[index]),
                       leading: CircleAvatar(
-                        backgroundImage: AssetImage('assets/profile_pic_dummy.jpg'),
+                        backgroundImage: AssetImage('assets/hashtag_placeholder.png'),
                       ),
                     ),
                   ),

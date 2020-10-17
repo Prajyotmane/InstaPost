@@ -25,8 +25,12 @@ class _ShowPostsState extends State<ShowPosts> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.data == null) {
-            return Container(
-                height: 200.0, child: Center(child: Icon(Icons.image_not_supported)));
+            return Tooltip(
+              message: "This post does not have image",
+              child: Container(
+                  height: 200.0,
+                  child: Center(child: Icon(Icons.image_not_supported))),
+            );
           } else {
             try {
               Uint8List bytes = base64.decode(snapshot.data);
@@ -36,8 +40,15 @@ class _ShowPostsState extends State<ShowPosts> {
                 fit: BoxFit.fill,
               );
             } catch (exception) {
-              return Container(
-                  height: 200.0, child: Center(child: Icon(Icons.broken_image)));
+              return Tooltip(
+                message: "This image is broken",
+                child: Container(
+                  height: 200.0,
+                  child: Center(
+                      child: Icon(Icons.broken_image),
+                    ),
+                ),
+              );
             }
           }
         } else {
@@ -81,12 +92,10 @@ class _ShowPostsState extends State<ShowPosts> {
                           Icons.star,
                           color: Colors.black,
                         ),
-
                       ),
                       Text("Rated by $ratingCount people"),
                     ],
                   ),
-
                   Text(caption),
                   Text(hashtags)
                 ],

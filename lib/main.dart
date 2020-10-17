@@ -1,4 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:assignment_two/SharedPreferencesManager.dart';
+import 'package:assignment_two/dbHandler.dart';
+import 'package:assignment_two/deviceStatus.dart';
 import 'package:assignment_two/instapostfeed.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,8 +35,58 @@ class _MyAppState extends State<MyApp> {
       _nickName = "",
       _email = "",
       _password = "",
-      _confirmPassword = "";
+      _confirmPassword = "",
+      _pendingPostMessage = "Checking for pending posts";
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    ApiCalls.init();
+    CacheFileManager.init();
+    print("APIcalls initialized successfully");
+  }
+
+  Future<Widget> _uploadPendingPost(List mapFromDB) async {
+    bool uploadResponse;
+    for (Map<String, dynamic> eachPost in mapFromDB) {
+      String image = eachPost["image"];
+      String postText = eachPost["posttext"];
+      List<String> postHashTags = eachPost["hashtags"].split(" ");
+
+      int id =
+          await ApiCalls.uploadPost(_email, _password, postText, postHashTags);
+      if (id == -1) {
+        print("Error occurred while uploading the post");
+        return InstaPostFeed();
+      } else {
+        print("Post ID is " + id.toString());
+        if (image.length > 0) {
+          uploadResponse =
+              await ApiCalls.uploadImage(_email, _password, id, image);
+        } else {
+          uploadResponse = true;
+        }
+      }
+      if (uploadResponse == false) {
+        break;
+      }
+    }
+    if (uploadResponse) {
+      print("All good in upload");
+      int deletedRows = await DBProvider.db.deleteAll();
+      if (deletedRows > 0) {
+        print("deleted successfully");
+        return InstaPostFeed();
+      } else {
+        print("Database delete failed");
+        return InstaPostFeed();
+      }
+    } else {
+      print("Post upload interrupted");
+      return InstaPostFeed();
+    }
+  }
 
   bool validateEmail(String value) {
     Pattern pattern =
@@ -43,7 +97,12 @@ class _MyAppState extends State<MyApp> {
 
   Future<bool> _isUserLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool("USER_LOGGED_IN");
+    bool response = prefs.getBool("USER_LOGGED_IN");
+    if (response) {
+      _email = prefs.getString("EMAIL");
+      _password = prefs.getString("PASSWORD");
+    }
+    return response;
   }
 
   @override
@@ -60,7 +119,86 @@ class _MyAppState extends State<MyApp> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.done) {
                     if (snapshot.data == true) {
-                      return InstaPostFeed();
+                      return FutureBuilder(
+                        future: DeviceStatus.dstate.isDeviceOnline(),
+                        builder: (context, isOnline) {
+                          if (isOnline.connectionState ==
+                              ConnectionState.done) {
+                            if (isOnline.data) {
+                              return FutureBuilder(
+                                  future: DBProvider.db.getPendingPosts(),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.done) {
+                                      if (snapshot.data.length == 0) {
+                                        print("Empty list found");
+                                        return InstaPostFeed();
+                                      } else {
+                                        return FutureBuilder(
+                                          future:
+                                              _uploadPendingPost(snapshot.data),
+                                          builder:
+                                              (context, postUploadSnapshot) {
+                                            _pendingPostMessage =
+                                                "Uploading pending posts";
+                                            if (postUploadSnapshot
+                                                    .connectionState ==
+                                                ConnectionState.done) {
+                                              return postUploadSnapshot.data;
+                                            } else {
+                                              return Center(
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    CircularProgressIndicator(
+                                                      valueColor:
+                                                          AlwaysStoppedAnimation<
+                                                                  Color>(
+                                                              Colors.black),
+                                                    ),
+                                                    Text(_pendingPostMessage)
+                                                  ],
+                                                ),
+                                              );
+                                            }
+                                          },
+                                        );
+                                      }
+                                    } else {
+                                      return Center(
+                                          child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          CircularProgressIndicator(
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                    Colors.black),
+                                          ),
+                                          Text(_pendingPostMessage)
+                                        ],
+                                      ));
+                                    }
+                                  });
+                            } else {
+                              return InstaPostFeed();
+                            }
+                          } else {
+                            return Center(
+                                child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.black),
+                                ),
+                                Text("Checking device status")
+                              ],
+                            ));
+                          }
+                        },
+                      );
                     } else {
                       return SingleChildScrollView(
                         child: Padding(
