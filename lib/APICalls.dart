@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:assignment_two/CacheFileManager.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:path_provider/path_provider.dart';
 
 class ApiCalls {
   static Future<String> signUp(

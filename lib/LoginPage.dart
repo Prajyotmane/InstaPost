@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:assignment_two/InstaPostFeed.dart';
 import 'package:assignment_two/main.dart';
 import 'package:flutter/material.dart';
 import 'LoadingScreen.dart';
@@ -7,6 +5,7 @@ import 'constants.dart';
 import 'APICalls.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/* this class handles login activity for the user */
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -90,14 +89,18 @@ class _LoginPageState extends State<LoginPage> {
                                   onPressed: () {
                                     print("Button pressed");
                                     if (_formKey.currentState.validate()) {
-                                      Dialogs.showLoadingDialog(context, _keyLoader);
+                                      Dialogs.showLoadingDialog(
+                                          context, _keyLoader);
                                       _formKey.currentState.save();
                                       ApiCalls.logIn(_email, _password)
                                           .then((value) {
                                         if (value) {
                                           _saveUserDetails(_email, _password)
                                               .then((value) {
-                                            Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
+                                            Navigator.of(
+                                                    _keyLoader.currentContext,
+                                                    rootNavigator: true)
+                                                .pop();
                                             final snackBar = SnackBar(
                                                 content:
                                                     Text("Login successful"));
@@ -111,7 +114,10 @@ class _LoginPageState extends State<LoginPage> {
                                             );
                                           });
                                         } else {
-                                          Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
+                                          Navigator.of(
+                                                  _keyLoader.currentContext,
+                                                  rootNavigator: true)
+                                              .pop();
                                           final snackBar = SnackBar(
                                               content: Text("Login Failed"));
                                           Scaffold.of(context)
@@ -121,6 +127,20 @@ class _LoginPageState extends State<LoginPage> {
                                     }
                                   },
                                   child: Text("Login"))),
+                          Container(
+                            padding: EdgeInsets.all(5.0),
+                            child: RaisedButton(
+                                color: Theme.of(context).dividerColor,
+                                onPressed: () {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => MyApp()),
+                                  );
+                                  //TODO
+                                },
+                                child: Text("Sign up")),
+                          )
                         ],
                       ),
                     ),

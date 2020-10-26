@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+
+/* This class provides the Dialogbox to show loading screen */
+
 class Dialogs {
-  static Future<void> showLoadingDialog(
-      BuildContext context, GlobalKey key, {message:"Please Wait"}) async {
+  static Future<void> showLoadingDialog(BuildContext context, GlobalKey key,
+      {message: "Please Wait"}) async {
     return showDialog<void>(
         context: context,
         barrierDismissible: false,
@@ -15,8 +18,13 @@ class Dialogs {
                     Center(
                       child: Column(children: [
                         CircularProgressIndicator(),
-                        SizedBox(height: 20,),
-                        Text(message,style: TextStyle(color: Colors.white),)
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Text(
+                          message,
+                          style: TextStyle(color: Colors.white),
+                        )
                       ]),
                     )
                   ]));

@@ -2,9 +2,12 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
+/* Database handler class: Handles storing of the pending posts uploaded by the user when when user is offline */
+
 class DBProvider {
   DBProvider._();
 
+  //Object creation to follow the Singleton pattern
   static final DBProvider db = DBProvider._();
   static Database _database;
 
@@ -28,6 +31,7 @@ class DBProvider {
     });
   }
 
+  //Stores new post to the file when the device is offline
   Future<int> newPost(String image, String postText, String hashTags) async {
     final db = await database;
     var res = await db
@@ -36,15 +40,16 @@ class DBProvider {
     return res;
   }
 
+  //Reads the pending posts from the SQLite database
   getPendingPosts() async {
     print("Getting pending posts");
     final db = await database;
     var res = await db.rawQuery("SELECT * FROM PendingPosts");
     List<Map<String, dynamic>> result = res;
-    print("Found :$result");
     return result;
   }
 
+  //Deletes all the posts from the SQLite database once they have been uploaded
   deleteAll() async {
     final db = await database;
     return db.rawDelete("Delete from PendingPosts");

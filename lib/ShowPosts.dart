@@ -1,16 +1,18 @@
 import 'dart:convert';
-import 'dart:io' as Io;
 import 'dart:typed_data';
 import 'package:assignment_two/PostDetails.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'constants.dart';
 import 'APICalls.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
+/* This class loads the image for a particular nickname or hashhag depending on showPostsfromNickName parameter, if true, load image for nickname else load image for hashtags */
+
 class ShowPosts extends StatefulWidget {
-  String keyForIDs;
-  bool showPostsfromNickName;
+  String
+      keyForIDs; //nickname or hashtag depending on the value of boolean variable showPostsfromNickName
+  bool
+      showPostsfromNickName; //if true, load posts for nickname else load posts for hashtag
 
   ShowPosts(this.keyForIDs, this.showPostsfromNickName);
 
@@ -45,8 +47,8 @@ class _ShowPostsState extends State<ShowPosts> {
                 child: Container(
                   height: 200.0,
                   child: Center(
-                      child: Icon(Icons.broken_image),
-                    ),
+                    child: Icon(Icons.broken_image),
+                  ),
                 ),
               );
             }
@@ -98,19 +100,26 @@ class _ShowPostsState extends State<ShowPosts> {
                       ),
                       Padding(
                         padding: const EdgeInsets.all(4.0),
-                        child: RichText(text: TextSpan(
+                        child: RichText(
+                            text: TextSpan(
                           text: 'Rated by ',
                           style: DefaultTextStyle.of(context).style,
                           children: <TextSpan>[
-                            TextSpan(text: ratingCount, style: TextStyle(fontWeight: FontWeight.bold)),
+                            TextSpan(
+                                text: ratingCount,
+                                style: TextStyle(fontWeight: FontWeight.bold)),
                             TextSpan(text: ' people'),
-                          ],)),
+                          ],
+                        )),
                       ),
                     ],
                   ),
                   Padding(
                     padding: const EdgeInsets.all(6.0),
-                    child: Text(caption,style: TextStyle(fontSize: 14.0),),
+                    child: Text(
+                      caption,
+                      style: TextStyle(fontSize: 14.0),
+                    ),
                   ),
                 ],
               ),
@@ -174,8 +183,8 @@ class _ShowPostsState extends State<ShowPosts> {
               : ApiCalls.getPostIDswithHashTag(widget.keyForIDs),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
-              print(snapshot.data);
-              if (snapshot.data!=null && snapshot.data.length > 0) {
+              //print(snapshot.data);
+              if (snapshot.data != null && snapshot.data.length > 0) {
                 return _loadPosts(snapshot.data);
               } else {
                 return Center(
@@ -183,10 +192,14 @@ class _ShowPostsState extends State<ShowPosts> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        padding: EdgeInsets.all(4.0),
-                        child: Icon(Icons.image_search_rounded),
+                        padding: EdgeInsets.all(6.0),
+                        child: Icon(Icons.image_search_outlined),
                       ),
-                      Text("No posts found"),
+                      Text(
+                        "No posts found",
+                        style: TextStyle(
+                            fontSize: 16.0, fontWeight: FontWeight.bold),
+                      ),
                     ],
                   ),
                 );

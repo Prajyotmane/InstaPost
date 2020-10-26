@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io' as Io;
 import 'dart:typed_data';
 import 'package:assignment_two/RateThePost.dart';
 import 'package:flutter/cupertino.dart';
@@ -9,6 +8,7 @@ import 'constants.dart';
 import 'APICalls.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
+/* This class shows the single post window containing rating and comments on the posts*/
 class DetailedPost extends StatefulWidget {
   String id;
 
@@ -31,6 +31,7 @@ class _DetailedPostState extends State<DetailedPost> {
           if (snapshot.data == null) {
             return Tooltip(
               message: "This post does not have image",
+              //This message is displayed when user long presses the wrapped widget
               child: Container(),
             );
           } else {
@@ -38,10 +39,11 @@ class _DetailedPostState extends State<DetailedPost> {
               Uint8List bytes = base64.decode(snapshot.data);
               return Image.memory(
                 bytes,
-                height: 200.0,
+                height: 250.0,
                 fit: BoxFit.fill,
               );
             } catch (exception) {
+              //If image is invalid
               return Tooltip(
                 message: "This image is broken",
                 child: Container(
@@ -58,6 +60,7 @@ class _DetailedPostState extends State<DetailedPost> {
     );
   }
 
+  //Read user credentials from sharedpreferences
   Future<List> _getUserCredentials() async {
     List<String> userCreds = new List();
     final prefs = await SharedPreferences.getInstance();
@@ -112,7 +115,7 @@ class _DetailedPostState extends State<DetailedPost> {
               return SingleChildScrollView(
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(0.0,0.0,0.0,8.0),
+                    padding: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 8.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -125,9 +128,11 @@ class _DetailedPostState extends State<DetailedPost> {
                               children: [
                                 _loadImage(widget.id),
                                 Padding(
-                                    padding: const EdgeInsets.all(6.0),
-                                    child: Text(caption,style: TextStyle(fontSize: 16.0),)
-                                ),
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      caption,
+                                      style: TextStyle(fontSize: 18.0),
+                                    )),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
@@ -141,7 +146,8 @@ class _DetailedPostState extends State<DetailedPost> {
                                         allowHalfRating: true,
                                         itemCount: 5,
                                         itemSize: 25,
-                                        itemPadding: EdgeInsets.symmetric(horizontal: 1.0),
+                                        itemPadding: EdgeInsets.symmetric(
+                                            horizontal: 1.0),
                                         itemBuilder: (context, _) => Icon(
                                           Icons.star,
                                           color: Colors.black,
@@ -150,20 +156,29 @@ class _DetailedPostState extends State<DetailedPost> {
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.all(4.0),
-                                      child: RichText(text: TextSpan(
+                                      child: RichText(
+                                          text: TextSpan(
                                         text: 'Rated by ',
-                                        style: DefaultTextStyle.of(context).style,
+                                        style:
+                                            DefaultTextStyle.of(context).style,
                                         children: <TextSpan>[
-                                          TextSpan(text: ratingCount, style: TextStyle(fontWeight: FontWeight.bold)),
+                                          TextSpan(
+                                              text: ratingCount,
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
                                           TextSpan(text: ' people'),
-                                        ],)),
+                                        ],
+                                      )),
                                     ),
                                   ],
                                 ),
                                 Padding(
-                                    padding: const EdgeInsets.fromLTRB(6.0,2.0,2.0,4.0),
-                                    child: Text("Tags: "+ hashtags,style: TextStyle(fontSize: 14.0),)
-                                ),
+                                    padding: const EdgeInsets.fromLTRB(
+                                        8.0, 2.0, 2.0, 4.0),
+                                    child: Text(
+                                      "Tags: " + hashtags,
+                                      style: TextStyle(fontSize: 14.0),
+                                    )),
                                 Center(
                                   child: Container(
                                     padding: EdgeInsets.all(4.0),
@@ -173,24 +188,32 @@ class _DetailedPostState extends State<DetailedPost> {
                                         String message;
                                         _rateThePost().then((value) {
                                           if (currentRating > 0 && value) {
-                                            message = "Your rating has been submitted.";
-                                          } else if (currentRating > 0 && !value) {
                                             message =
-                                            "Something went wrong. Check your internet connection";
+                                                "Your rating has been submitted.";
+                                          } else if (currentRating > 0 &&
+                                              !value) {
+                                            message =
+                                                "Something went wrong. Check your internet connection";
                                           } else {
                                             message = "Canceled";
                                           }
-                                          final snackBar = SnackBar(content: Text(message));
-                                          Scaffold.of(context).showSnackBar(snackBar);
+                                          final snackBar =
+                                              SnackBar(content: Text(message));
+                                          Scaffold.of(context)
+                                              .showSnackBar(snackBar);
                                         });
                                       },
                                       child: Row(
                                         children: [
                                           Padding(
-                                            padding: const EdgeInsets.fromLTRB(2.0,0.0,4.0,0.0),
+                                            padding: const EdgeInsets.fromLTRB(
+                                                2.0, 0.0, 4.0, 0.0),
                                             child: Icon(Icons.thumb_up),
                                           ),
-                                          Text("Rate this post", textAlign: TextAlign.center,),
+                                          Text(
+                                            "Rate this post",
+                                            textAlign: TextAlign.center,
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -200,7 +223,6 @@ class _DetailedPostState extends State<DetailedPost> {
                             ),
                           ),
                         ),
-
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
@@ -211,7 +233,6 @@ class _DetailedPostState extends State<DetailedPost> {
                                 fontSize: 24, fontWeight: FontWeight.bold),
                           ),
                         ),
-
                         Form(
                           key: _commentFormKey,
                           child: Padding(
@@ -241,8 +262,11 @@ class _DetailedPostState extends State<DetailedPost> {
                                             .validate()) {
                                           _commentFormKey.currentState.save();
                                           _getUserCredentials().then((value) {
-                                            ApiCalls.postComment(value[0],
-                                                    value[1], widget.id, comment)
+                                            ApiCalls.postComment(
+                                                    value[0],
+                                                    value[1],
+                                                    widget.id,
+                                                    comment)
                                                 .then((value) {
                                               if (value) {
                                                 final snackBar = SnackBar(

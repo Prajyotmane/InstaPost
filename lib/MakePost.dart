@@ -3,14 +3,15 @@ import 'dart:io';
 import 'package:assignment_two/APICalls.dart';
 import 'package:assignment_two/DBHandler.dart';
 import 'package:assignment_two/DeviceStatus.dart';
+import 'package:assignment_two/User.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hashtagable/hashtagable.dart';
-
 import 'LoadingScreen.dart';
 import 'main.dart';
+
+/* This module handles the user's post upload action*/
 
 class MakeAPost extends StatefulWidget {
   @override
@@ -19,7 +20,7 @@ class MakeAPost extends StatefulWidget {
 
 class _MakeAPostState extends State<MakeAPost> {
   File _image;
-  String _postText, _textErrorText, _hashTagErrorText;
+  String _postText, _textErrorText;
   bool _textError = false, isConnected = true;
   List<String> _hashTags;
   Widget show = Container();
@@ -27,24 +28,9 @@ class _MakeAPostState extends State<MakeAPost> {
       postController = TextEditingController();
   final GlobalKey<State> _keyLoader = new GlobalKey<State>();
 
-  Future<List> _getUserCredentials() async {
-    List<String> userCreds = new List();
-    final prefs = await SharedPreferences.getInstance();
-    userCreds.add(prefs.getString("EMAIL"));
-    userCreds.add(prefs.getString("PASSWORD"));
-    print(userCreds);
-    return userCreds;
-  }
-
-  Future<bool> _userLogout() async {
-    final prefs = await SharedPreferences.getInstance();
-    bool res = await prefs.clear();
-    await DBProvider.db.deleteAll();
-    return res;
-  }
-
   final picker = ImagePicker();
 
+  //Picks the image from user's gallery
   _getImage() async {
     final PickedFile pickedFile = await picker.getImage(
         source: ImageSource.gallery, imageQuality: 50, maxWidth: 400.0);
@@ -52,24 +38,24 @@ class _MakeAPostState extends State<MakeAPost> {
       if (pickedFile != null) {
         _image = File(pickedFile.path);
       } else {
-        print('No image selected.');
+        print('No image selected.'); //Debug message
       }
     });
   }
 
+  //Validates the post for text and hashtags
   bool _validatePostFields() {
-    _postText = hashTagController.text;
-    _hashTags = extractHashTags(_postText);
+    _postText = hashTagController.text; //Post text
+    _hashTags = extractHashTags(_postText); //Extracts hashtags from the post
 
-    print(_postText);
-    print(_hashTags);
-
+    //If no text in post
     if (_postText.length == 0) {
       setState(() {
         _textError = true;
         _textErrorText = "Post must contain text";
       });
-    } else if (_postText.length > 140) {
+    } else if (_postText.length > 144) {
+      //if post has more than 144 characters
       setState(() {
         _textError = true;
         _textErrorText = "Post must not contain more than 140 characters";
@@ -80,6 +66,7 @@ class _MakeAPostState extends State<MakeAPost> {
       });
     }
 
+    //if no hashtags in post
     if (_hashTags.length == 0) {
       setState(() {
         _textError = true;
@@ -90,20 +77,24 @@ class _MakeAPostState extends State<MakeAPost> {
         _textError = false;
       });
     }
-    print(_textError);
+    print(_textError); //Debug message
     return !_textError;
   }
 
+  //Uploads the post
   Future<bool> _uploadPost(String email, String password) async {
-    isConnected = await DeviceStatus.dstate.isDeviceOnline();
+    isConnected = await DeviceStatus.dstate
+        .isDeviceOnline(); //Check the network connection
+
+    //if device is online, upload the post
     if (isConnected) {
       return ApiCalls.uploadPost(email, password, _postText, _hashTags)
           .then((id) {
         if (id == -1) {
-          print("Error occurred while uploading the post");
+          print("Error occurred while uploading the post"); //Debug message
           return false;
         } else {
-          print("Post ID is " + id.toString());
+          print("Post ID is " + id.toString()); //Debug message
           if (_image != null) {
             return _image.readAsBytes().then((value) {
               String encodedImage = base64Encode(value);
@@ -122,6 +113,7 @@ class _MakeAPostState extends State<MakeAPost> {
         }
       });
     } else {
+      //else save the post in file locally
       return _image.readAsBytes().then((value) {
         String encodedImage = base64Encode(value);
         return DBProvider.db
@@ -150,26 +142,31 @@ class _MakeAPostState extends State<MakeAPost> {
               : Image.file(_image, fit: BoxFit.fill),
         ),
       ),
-      Text(
-        "Add Image",
-        textAlign: TextAlign.center,
-      ),
+      Text("Add Image",
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
       Column(
         children: [
-          HashTagTextField(
-            decoration: InputDecoration(
-                labelText: "Type your post and Give some hashtags..",
-                errorText: _textError ? _textErrorText : null),
-            maxLength: 140,
-            controller: hashTagController,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(6.0, 2.0, 6.0, 0.0),
+            child: HashTagTextField(
+              decoration: InputDecoration(
+                  labelText: "Type your post and Give some hashtags..",
+                  errorText: _textError ? _textErrorText : null),
+              maxLength: 144,
+              keyboardType: TextInputType.multiline,
+              maxLines: null,
+              controller: hashTagController,
+            ),
           ),
           Container(
             width: 120.0,
             child: RaisedButton(
               onPressed: () {
                 if (_validatePostFields()) {
-                  Dialogs.showLoadingDialog(context, _keyLoader); //invoking login
-                  _getUserCredentials().then((value) {
+                  Dialogs.showLoadingDialog(
+                      context, _keyLoader); //invoking loading screen
+                  User.getUserCredentials().then((value) {
                     String email = value[0];
                     String password = value[1];
                     _uploadPost(email, password).then((value) {
@@ -177,8 +174,8 @@ class _MakeAPostState extends State<MakeAPost> {
                         Navigator.of(_keyLoader.currentContext,
                                 rootNavigator: true)
                             .pop();
-                        final snackBar =
-                            SnackBar(content: Text("Post uploaded successfully"));
+                        final snackBar = SnackBar(
+                            content: Text("Post uploaded successfully"));
                         Scaffold.of(context).showSnackBar(snackBar);
                       } else if (value == true && isConnected == false) {
                         Navigator.of(_keyLoader.currentContext,
@@ -190,12 +187,16 @@ class _MakeAPostState extends State<MakeAPost> {
                         Scaffold.of(context).showSnackBar(snackBar);
                       } else {
                         Navigator.of(_keyLoader.currentContext,
-                            rootNavigator: true)
+                                rootNavigator: true)
                             .pop();
                         final snackBar =
                             SnackBar(content: Text("Post upload failed"));
                         Scaffold.of(context).showSnackBar(snackBar);
                       }
+                      setState(() {
+                        _image = null;
+                        hashTagController.clear();
+                      });
                     });
                   });
                 }
@@ -203,40 +204,45 @@ class _MakeAPostState extends State<MakeAPost> {
               child: Row(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(2.0,0.0,4.0,0.0),
+                    padding: const EdgeInsets.fromLTRB(2.0, 0.0, 4.0, 0.0),
                     child: Icon(Icons.upload_outlined),
                   ),
-                  Text("Post", textAlign: TextAlign.center,),
+                  Text(
+                    "Post",
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
             ),
           ),
           Container(
-            margin: EdgeInsets.fromLTRB(0.0,10.0,0,0),
+            margin: EdgeInsets.fromLTRB(0.0, 10.0, 0, 0),
             width: 120.0,
             child: RaisedButton(
               onPressed: () async {
-                print("Logout clicked");
                 Dialogs.showLoadingDialog(context, _keyLoader);
-                bool res = await _userLogout();
-                if(res){
-                  print("Logout successful");
+                bool res = await User.userLogout();
+                if (!res) {
+                  final snackBar = SnackBar(content: Text("Logout Failed"));
+                  Scaffold.of(context).showSnackBar(snackBar);
                 }
-                Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
+                Navigator.of(_keyLoader.currentContext, rootNavigator: true)
+                    .pop();
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          MyApp()),
+                  MaterialPageRoute(builder: (context) => MyApp()),
                 );
               },
               child: Row(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(2.0,0.0,4.0,0.0),
+                    padding: const EdgeInsets.fromLTRB(2.0, 0.0, 4.0, 0.0),
                     child: Icon(Icons.logout),
                   ),
-                  Text("Logout", textAlign: TextAlign.center,),
+                  Text(
+                    "Logout",
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
             ),
